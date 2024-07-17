@@ -7,8 +7,6 @@
 - [6 压力测试](#6-压力测试)
 - [7 MySQL 数据库编程](#7-mysql-数据库编程)
 
-[codedir](https://github.com/Corner430/study-notes/blob/main/cpp/数据库连接池)
-
 # 0 环境搭建
 
 ```shell
