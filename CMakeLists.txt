@@ -11,6 +11,9 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 # 包含头文件目录
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+# 定义 MySQL 配置文件路径
+add_definitions(-DMYSQL_CONFIG_FILE_PATH=\"${PROJECT_SOURCE_DIR}/config/mysql.conf\")
+
 # 查找源文件
 file(GLOB SOURCES "src/*.cpp")
 

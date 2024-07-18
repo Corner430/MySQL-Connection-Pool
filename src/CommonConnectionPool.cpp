@@ -9,7 +9,8 @@ ConnectionPool *ConnectionPool::getConnectionPool() {
 
 // 从配置文件中加载配置
 bool ConnectionPool::loadConfigFile() {
-  FILE *pf = fopen("mysql.conf", "r");
+  const char* config_file = MYSQL_CONFIG_FILE_PATH;
+  FILE *pf = fopen(config_file, "r");
   if (pf == nullptr) {
     LOG("mysql.conf file is not exist!");
     return false;

@@ -14,6 +14,9 @@ public:
   bool update(string sql);      // 更新操作, insert, update, delete
   MYSQL_RES *query(string sql); // 查询操作, select
 
+  // 获取当前 MySQL 连接
+  MYSQL *getConnection() const { return _conn; }
+
   // 刷新连接的起始的空闲时间点，clock() 返回的是 CPU 时间
   void refreshAliveTime() { _alivetime = clock(); }
 

@@ -17,6 +17,13 @@
 cd build && cmake .. && make
 ```
 
+CMakeList.txt 文件需要加入如下内容：
+
+```cmake
+# 定义 MySQL 配置文件路径
+add_definitions(-DMYSQL_CONFIG_FILE_PATH=\"${PROJECT_SOURCE_DIR}/config/mysql.conf\")
+```
+
 在自己创建的项目中，引入 `libmysql_connection_pool.so` 动态链接库文件，然后在项目中引入 `/include` 目录下的头文件和 mysql.conf 配置文件即可使用连接池功能，具体使用方式可以参考 `examples` 目录下的示例程序。
 
 # 3 关键技术点
