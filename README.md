@@ -7,6 +7,8 @@
 - [7 压力测试](#7-压力测试)
 - [8 MySQL 数据库编程](#8-mysql-数据库编程)
 
+参考[开发日志](https://github.com/Corner430/MySQL-Connection-Pool/blob/main/logs.md)进行学习
+
 # 1 环境配置
 
 [Docker 开发环境](https://github.com/Corner430/Docker/tree/main/MySQL-Connection-Pool)
@@ -174,4 +176,3 @@ MYSQL_RES *Connection::query(string sql) {
 
 #endif
 ```
-
