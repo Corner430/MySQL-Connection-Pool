@@ -3,13 +3,13 @@
 
 // 线程安全的懒汉单例模式
 ConnectionPool *ConnectionPool::getConnectionPool() {
-  static ConnectionPool pool; // lock 和 unlock
+  static ConnectionPool pool;
   return &pool;
 }
 
 // 从配置文件中加载配置
 bool ConnectionPool::loadConfigFile() {
-  const char* config_file = MYSQL_CONFIG_FILE_PATH;
+  const char *config_file = MYSQL_CONFIG_FILE_PATH;
   FILE *pf = fopen(config_file, "r");
   if (pf == nullptr) {
     LOG("mysql.conf file is not exist!");
@@ -48,9 +48,7 @@ bool ConnectionPool::loadConfigFile() {
   return true;
 }
 
-// 构造函数
 ConnectionPool::ConnectionPool() {
-  // 从配置文件中加载配置
   if (!loadConfigFile())
     return;
 
@@ -76,11 +74,9 @@ ConnectionPool::ConnectionPool() {
 void ConnectionPool::produceConnectionTask() {
   while (true) {
     unique_lock<mutex> lock(_queueMutex);
-    while (!_connectionQue.empty()) { // 队列不为空， 释放锁并等待
-      cv.wait(lock);
-    }
+    while (!_connectionQue.empty())
+      cv.wait(lock); // 释放锁并等待
 
-    // 连接数量没有达到最大值，创建新连接
     if (_connectionCnt < _maxSize) {
       Connection *p = new Connection;
       p->connect(_ip, _port, _username, _password, _dbname);
@@ -97,26 +93,26 @@ shared_ptr<Connection> ConnectionPool::getConnection() {
   unique_lock<mutex> lock(_queueMutex);
   while (_connectionQue.empty()) {
     // 需要判断 timeout，防止被唤醒之后，队列还是空的（别人手快，取走了）
-  }
-  if (cv_status::timeout ==
-      cv.wait_for(lock, chrono::milliseconds(_connectionTimeout))) {
-    if (_connectionQue.empty()) {
-      LOG("get connection timeout!");
-      return nullptr;
+    if (cv_status::timeout ==
+        cv.wait_for(lock, chrono::milliseconds(_connectionTimeout))) {
+      if (_connectionQue.empty()) {
+        LOG("get connection timeout!");
+        return nullptr;
+      }
     }
+
+    // 自定义删除器，用于释放资源
+    shared_ptr<Connection> sp(_connectionQue.front(), [&](Connection *p) {
+      unique_lock<mutex> lock(_queueMutex);
+      p->refreshAliveTime(); // 刷新连接的起始的空闲时间点
+      _connectionQue.push(p);
+    });
+
+    _connectionQue.pop();
+    if (_connectionQue.empty())
+      cv.notify_all(); // 唤醒生产者线程
+    return sp;
   }
-
-  // 自定义删除器，用于释放资源
-  shared_ptr<Connection> sp(_connectionQue.front(), [&](Connection *p) {
-    unique_lock<mutex> lock(_queueMutex);
-    p->refreshAliveTime(); // 刷新连接的起始的空闲时间点
-    _connectionQue.push(p);
-  });
-
-  _connectionQue.pop();
-  if (_connectionQue.empty())
-    cv.notify_all(); // 唤醒生产者线程
-  return sp;
 }
 
 // 检测空闲连接，回收超时连接
@@ -127,9 +123,8 @@ void ConnectionPool::scannerConnectionTask() {
     unique_lock<mutex> lock(_queueMutex);
     while (_connectionCnt > _initSize) {
       Connection *p = _connectionQue.front();
-      if (p->getAliveTime() < _maxIdleTime * 1000) { // 未超时，后面的更不会超时
+      if (p->getAliveTime() < _maxIdleTime * 1000) // 未超时，后面的更不会超时
         break;
-      }
       _connectionQue.pop();
       --_connectionCnt;
       delete p;
